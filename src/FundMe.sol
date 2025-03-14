@@ -14,8 +14,8 @@ contract FundMe {
     uint256 public constant MINIMUM_USD = 5e18;
     AggregatorV3Interface private s_priceFeed;
 
-    address[] public funders;
-    mapping (address funder => uint256 amountFunded) public addressToAmountFunded;
+    address[] private s_funders;
+    mapping (address funder => uint256 amountFunded) private s_addressToAmountFunded;
 
     address public immutable i_owner;
 
@@ -27,19 +27,19 @@ contract FundMe {
     // take a look at chainlink functions 
     function fund () payable public {
         require(msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD, "didn't send enoght eth");
-        funders.push(msg.sender);
-        addressToAmountFunded[msg.sender] += msg.value;
+        s_funders.push(msg.sender);
+        s_addressToAmountFunded[msg.sender] += msg.value;
         // revert transaction if condition not true
     }
 
     function withdraw() public onlyOwner{
        
-        for (uint256 funderIndex = 0; funderIndex < funders.length; funderIndex++){
-            address funder = funders[funderIndex];
-            addressToAmountFunded[funder] = 0;
+        for (uint256 funderIndex = 0; funderIndex < s_funders.length; funderIndex++){
+            address funder = s_funders[funderIndex];
+            s_addressToAmountFunded[funder] = 0;
         }
 
-        funders = new address[](0);
+        s_funders = new address[](0);
         //transfer
         //payable(msg.sender).transfer(address(this).balance);
         //send
@@ -59,6 +59,16 @@ contract FundMe {
         if(msg.sender != i_owner) { revert FundMe__NotOwner();}
          //require(msg.sender == i_owner,"Only owner can withdraw!");
          _; //runs the following code
+    }
+
+    /** Getter Functions */
+
+    function getAddressToAmountFunded(address fundingAddress) public view returns (uint256) {
+        return s_addressToAmountFunded[fundingAddress];
+    }
+
+    function getFunder(uint256 index) public view returns (address) {
+        return s_funders[index];
     }
 
     receive() external payable {

@@ -17,7 +17,7 @@ contract FundMe {
     address[] private s_funders;
     mapping (address funder => uint256 amountFunded) private s_addressToAmountFunded;
 
-    address public immutable i_owner;
+    address private immutable i_owner;
 
     constructor(address priceFeed){
         i_owner = msg.sender;
@@ -69,6 +69,10 @@ contract FundMe {
 
     function getFunder(uint256 index) public view returns (address) {
         return s_funders[index];
+    }
+
+    function getOwner() public view returns(address) {
+        return i_owner;
     }
 
     receive() external payable {

@@ -10,14 +10,13 @@ error FundMe__NotOwner();
 
 contract FundMe {
     using PriceConverter for uint256;
-
+    
+    address private immutable i_owner;
     uint256 public constant MINIMUM_USD = 5e18;
+    
     AggregatorV3Interface private s_priceFeed;
-
     address[] private s_funders;
     mapping (address funder => uint256 amountFunded) private s_addressToAmountFunded;
-
-    address private immutable i_owner;
 
     constructor(address priceFeed){
         i_owner = msg.sender;
@@ -30,6 +29,19 @@ contract FundMe {
         s_funders.push(msg.sender);
         s_addressToAmountFunded[msg.sender] += msg.value;
         // revert transaction if condition not true
+    }
+
+    function cheaperWithdraw() public onlyOwner {
+        uint256 fundersLength = s_funders.length;
+
+        for(uint256 funderIndex =0; funderIndex < fundersLength; funderIndex++){
+            address funder = s_funders[funderIndex];
+            s_addressToAmountFunded[funder] = 0;
+        }
+        s_funders = new address[](0);
+        (bool callSuccess, ) = payable(msg.sender).call{value:address(this).balance}("");
+        require(callSuccess, "call failed");
+
     }
 
     function withdraw() public onlyOwner{
